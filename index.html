@@ -40,46 +40,103 @@
   <h1>🍽️ Unser Mittagsplan</h1>
   <div id="tage"></div>
 
-  <script>
-    const wochentage = ["Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag", "Sonntag"];
-    const gespeicherteDaten = JSON.parse(localStorage.getItem("mittagsplan")) || {};
+<script>
+  const wochentage = ["Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag", "Sonntag"];
+  const gespeicherteDaten = JSON.parse(localStorage.getItem("mittagsplan")) || {};
+  const apiKey = localStorage.getItem("openai_api_key") || "";
 
-    function speichern() {
-      localStorage.setItem("mittagsplan", JSON.stringify(gespeicherteDaten));
+  function speichern() {
+    localStorage.setItem("mittagsplan", JSON.stringify(gespeicherteDaten));
+  }
+
+  async function generiereVorschlag(tag, input) {
+    if (!apiKey) {
+      alert("Kein OpenAI API-Key gespeichert!");
+      return;
     }
 
-    function render() {
-      const container = document.getElementById("tage");
-      container.innerHTML = "";
-
-      wochentage.forEach(tag => {
-        const eintrag = gespeicherteDaten[tag] || "";
-        const div = document.createElement("div");
-        div.className = "tag";
-
-        const title = document.createElement("h2");
-        title.textContent = tag;
-
-        const input = document.createElement("input");
-        input.type = "text";
-        input.value = eintrag;
-        input.placeholder = `Was gibt's am ${tag}?`;
-
-        const button = document.createElement("button");
-        button.textContent = "💾";
-        button.onclick = () => {
-          gespeicherteDaten[tag] = input.value;
-          speichern();
-        };
-
-        div.appendChild(title);
-        div.appendChild(input);
-        div.appendChild(button);
-        container.appendChild(div);
+    const prompt = `Gib mir ein einfaches Mittagessen für ${tag}.`;
+    try {
+      const response = await fetch("https://api.openai.com/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${apiKey}`
+        },
+        body: JSON.stringify({
+          model: "gpt-3.5-turbo",
+          messages: [{ role: "user", content: prompt }],
+          max_tokens: 30
+        })
       });
-    }
 
-    render();
-  </script>
+      const data = await response.json();
+      const vorschlag = data.choices[0].message.content.trim();
+      input.value = vorschlag;
+      gespeicherteDaten[tag] = vorschlag;
+      speichern();
+    } catch (error) {
+      alert("Fehler bei der API-Anfrage.");
+      console.error(error);
+    }
+  }
+
+  function render() {
+    const container = document.getElementById("tage");
+    container.innerHTML = "";
+
+    wochentage.forEach(tag => {
+      const eintrag = gespeicherteDaten[tag] || "";
+      const div = document.createElement("div");
+      div.className = "tag";
+
+      const title = document.createElement("h2");
+      title.textContent = tag;
+
+      const input = document.createElement("input");
+      input.type = "text";
+      input.value = eintrag;
+      input.placeholder = `Was gibt's am ${tag}?`;
+
+      const saveButton = document.createElement("button");
+      saveButton.textContent = "💾";
+      saveButton.onclick = () => {
+        gespeicherteDaten[tag] = input.value;
+        speichern();
+      };
+
+      const genButton = document.createElement("button");
+      genButton.textContent = "✨ Vorschlag";
+      genButton.onclick = () => generiereVorschlag(tag, input);
+      genButton.disabled = input.value.trim().length > 0;
+
+      input.addEventListener("input", () => {
+        genButton.disabled = input.value.trim().length > 0;
+      });
+
+      div.appendChild(title);
+      div.appendChild(input);
+      div.appendChild(saveButton);
+      div.appendChild(genButton);
+      container.appendChild(div);
+    });
+
+    // Optional: API-Key setzen
+    const keyDiv = document.createElement("div");
+    keyDiv.style.marginTop = "2rem";
+    keyDiv.innerHTML = `
+      <h3>🔐 OpenAI API-Key:</h3>
+      <input id="apikey" placeholder="sk-..." style="width:80%;" value="${apiKey}">
+      <button onclick="
+        localStorage.setItem('openai_api_key', document.getElementById('apikey').value);
+        alert('API-Key gespeichert!');
+      ">Speichern</button>
+    `;
+    container.appendChild(keyDiv);
+  }
+
+  render();
+</script>
+
 </body>
 </html>
