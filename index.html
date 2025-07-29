@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#f0f0f0">
   <meta charset="UTF-8">
   <title>Unser Mittagsplan</title>
   <style>
@@ -123,6 +125,13 @@
     }
 
     render();
+  </script>
+  <script>
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('service-worker.js')
+      .then(() => console.log('✅ Service Worker registriert'))
+      .catch(err => console.error('❌ SW-Fehler', err));
+  }
   </script>
 </body>
 </html>
