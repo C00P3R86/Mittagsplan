@@ -1,11 +1,85 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Testseite Online</title>
+  <meta charset="UTF-8">
+  <title>Unser Mittagsplan</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      background: #f0f0f0;
+      padding: 2rem;
+      max-width: 600px;
+      margin: auto;
+    }
+    h1 {
+      text-align: center;
+    }
+    .tag {
+      margin-bottom: 1rem;
+      background: #fff;
+      padding: 1rem;
+      border-radius: 8px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    .tag h2 {
+      margin: 0 0 0.5rem;
+    }
+    input {
+      width: 80%;
+      padding: 0.5rem;
+      font-size: 1rem;
+    }
+    button {
+      padding: 0.5rem;
+      font-size: 1rem;
+      margin-left: 0.5rem;
+    }
+  </style>
 </head>
 <body>
-    <h1>Die Seite ist online!</h1>
+  <h1>🍽️ Unser Mittagsplan</h1>
+  <div id="tage"></div>
+
+  <script>
+    const wochentage = ["Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag", "Sonntag"];
+    const gespeicherteDaten = JSON.parse(localStorage.getItem("mittagsplan")) || {};
+
+    function speichern() {
+      localStorage.setItem("mittagsplan", JSON.stringify(gespeicherteDaten));
+    }
+
+    function render() {
+      const container = document.getElementById("tage");
+      container.innerHTML = "";
+
+      wochentage.forEach(tag => {
+        const eintrag = gespeicherteDaten[tag] || "";
+        const div = document.createElement("div");
+        div.className = "tag";
+
+        const title = document.createElement("h2");
+        title.textContent = tag;
+
+        const input = document.createElement("input");
+        input.type = "text";
+        input.value = eintrag;
+        input.placeholder = `Was gibt's am ${tag}?`;
+
+        const button = document.createElement("button");
+        button.textContent = "💾";
+        button.onclick = () => {
+          gespeicherteDaten[tag] = input.value;
+          speichern();
+        };
+
+        div.appendChild(title);
+        div.appendChild(input);
+        div.appendChild(button);
+        container.appendChild(div);
+      });
+    }
+
+    render();
+  </script>
 </body>
 </html>
